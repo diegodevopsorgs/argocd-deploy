@@ -111,7 +111,7 @@ spec:
             set -e
             git clone "https://x-access-token:${GH_TOKEN}@github.com/{{workflow.parameters.owner}}/${APP}-conf.git" /workspace/conf
             cd /workspace/conf
-            printf '# Archivo gestionado por el CI (Argo Workflows). No editar a mano.\ndeployments:\n  %s:\n    tag: %s\n' "$APP" "$TAG" > tags-prod.yaml
+            printf '# Archivo gestionado por el CI (Argo Workflows). No editar a mano.\ndeployments:\n  %s:\n    tag: "%s"\n' "$APP" "$TAG" > tags-prod.yaml
             git add tags-prod.yaml
             if git diff --cached --quiet; then echo "El tag ya era $TAG: nada que publicar"; exit 0; fi
             git -c user.name=argo-ci -c user.email=argo-ci@noreply commit -m "$APP: imagen $TAG"
