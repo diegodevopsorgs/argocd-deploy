@@ -1,0 +1,52 @@
+# Plataforma en YAML plano (sin Helm): una Application por cada platform/manifests/*/platform.yaml.
+# Ejemplo: platform/manifests/ci (EventBus, EventSource, Sensor, RBAC y el pipeline).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-manifests
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - git:
+        repoURL: https://github.com/diegodevopsorg/argocd-deploy.git
+        revision: main
+        files:
+          - path: 'platform/manifests/*/platform.yaml'
+      selector:
+        matchLabels:
+          enabled: "true"
+  template:
+    metadata:
+      name: 'platform-{{ .name }}'
+      labels:
+        tipo: platform
+    spec:
+      project: platform
+      source:
+        repoURL: https://github.com/diegodevopsorg/argocd-deploy.git
+        targetRevision: main
+        path: 'platform/manifests/{{ .name }}'
+        directory:
+          exclude: 'platform.yaml'          # son datos para el ApplicationSet, no un manifiesto
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - SkipDryRunOnMissingResource=true   # los CRDs de Argo llegan desde platform-charts
+        # Los ApplicationSets no ordenan entre sus Applications: ésta reintenta hasta que existan los CRDs.
+        retry:
+          limit: 10
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m

@@ -1,0 +1,53 @@
+# Plataforma instalada con Helm: una Application por cada platform/charts/*/platform.yaml.
+# Cada carpeta es un chart "envoltorio" con la dependencia oficial y su versión fija.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-charts
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  # Borrar una carpeta elimina la Application pero NO los recursos: una baja de plataforma es deliberada.
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - git:
+        repoURL: https://github.com/diegodevopsorg/argocd-deploy.git
+        revision: main
+        files:
+          - path: 'platform/charts/*/platform.yaml'
+      selector:
+        matchLabels:
+          enabled: "true"
+  template:
+    metadata:
+      name: 'platform-{{ .name }}'
+      labels:
+        tipo: platform
+    spec:
+      project: platform
+      source:
+        repoURL: https://github.com/diegodevopsorg/argocd-deploy.git
+        targetRevision: main
+        path: 'platform/charts/{{ .name }}'
+        helm:
+          valueFiles:
+            - values.yaml
+            - values-prod.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true            # los CRDs de Argo son enormes
+        retry:
+          limit: 10
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m

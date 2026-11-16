@@ -1,0 +1,52 @@
+# Apps de negocio en producción: una Application por cada apps/prod/*.yaml.
+# Cada app toma su chart del repo <app>-conf con tres archivos de valores:
+#   values.yaml       común a todos los entornos (lo edita una persona)
+#   values-prod.yaml  lo de producción (lo edita una persona)
+#   tags-prod.yaml    el tag de la imagen (lo escribe SOLO el CI)
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps-prod
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/diegodevopsorg/argocd-deploy.git
+        revision: main
+        files:
+          - path: 'apps/prod/*.yaml'
+      # Sólo las apps con enabled: "true" (entre comillas: se compara como texto).
+      selector:
+        matchLabels:
+          enabled: "true"
+  template:
+    metadata:
+      name: '{{ .name }}-prod'
+      labels:
+        tipo: app
+        env: prod
+      # Al dar de baja una app (enabled: "false" o borrar su archivo) se eliminan también sus recursos.
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: '{{ .repoURL }}'
+        targetRevision: '{{ .targetRevision }}'
+        path: .
+        helm:
+          valueFiles:
+            - values.yaml
+            - values-prod.yaml
+            - tags-prod.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

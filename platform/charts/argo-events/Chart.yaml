@@ -1,0 +1,9 @@
+apiVersion: v2
+name: platform-argo-events
+description: Envoltorio de Argo Events (recibe webhooks y dispara workflows)
+type: application
+version: 0.1.0
+dependencies:
+  - name: argo-events
+    version: 2.4.28
+    repository: https://argoproj.github.io/argo-helm

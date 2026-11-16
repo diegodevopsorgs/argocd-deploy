@@ -1,0 +1,132 @@
+# Pipeline CI genérico: clone -> build-push -> release
+#
+# Funciona por CONVENCIÓN a partir del nombre del repo de código (<app>):
+#   código   github.com/<owner>/<app>
+#   chart    github.com/<owner>/<app>-conf
+#   imagen   <image-namespace>/<app>:<sha corto>
+#   token    UN solo Secret "github-token" en el namespace argo, común a todas las apps (lo crea entorno.py)
+#
+# El último paso escribe tags-prod.yaml en el repo -conf. Ese archivo es SÓLO del CI:
+# así nunca reformatea ni pisa lo que una persona edita en values-prod.yaml.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ci-build-release
+  namespace: argo
+spec:
+  entrypoint: main
+  serviceAccountName: argo-workflow
+
+  arguments:
+    parameters:
+      - name: app                  # lo rellena el Sensor: nombre del repo de código
+      - name: revision             # lo rellena el Sensor: hash del commit
+      - name: owner
+        value: diegodevopsorg      # organización de GitHub
+      - name: image-namespace
+        value: diego1986           # usuario de Docker Hub
+
+  # Limpieza automática
+  ttlStrategy:
+    secondsAfterCompletion: 86400
+  volumeClaimGC:
+    strategy: OnWorkflowCompletion
+
+  # Workspace compartido entre pasos
+  volumeClaimTemplates:
+    - metadata:
+        name: workspace
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: clone
+            template: clone
+          - name: build-push
+            template: build-push
+            dependencies: [clone]
+          - name: release
+            template: release
+            dependencies: [build-push]
+
+    # 1) Clonar el repo de código en el commit exacto del push
+    - name: clone
+      container:
+        image: alpine/git:v2.45.2
+        command: [sh, -c]
+        args:
+          - |
+            set -e
+            git clone "https://x-access-token:${GH_TOKEN}@github.com/{{workflow.parameters.owner}}/{{workflow.parameters.app}}.git" /workspace/src
+            cd /workspace/src
+            git checkout {{workflow.parameters.revision}}
+            git log -1 --oneline
+        env:
+          - name: GH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-token
+                key: token
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+
+    # 2) Build de la imagen y push con Kaniko (sin Docker daemon). Tag = SHA corto del commit.
+    - name: build-push
+      container:
+        image: gcr.io/kaniko-project/executor:v1.23.2
+        args:
+          - --context=/workspace/src
+          - --dockerfile=/workspace/src/Dockerfile
+          - --destination={{workflow.parameters.image-namespace}}/{{workflow.parameters.app}}:{{=sprig.trunc(7, workflow.parameters.revision)}}
+        resources:
+          requests:
+            memory: 512Mi
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+          - name: docker-config
+            mountPath: /kaniko/.docker
+      volumes:
+        - name: docker-config
+          secret:
+            secretName: dockerhub-creds
+            items:
+              - key: .dockerconfigjson
+                path: config.json
+
+    # 3) Release: escribir el tag nuevo en el repo -conf. Argo CD lo detecta y despliega.
+    - name: release
+      container:
+        image: alpine/git:v2.45.2
+        command: [sh, -c]
+        args:
+          - |
+            set -e
+            git clone "https://x-access-token:${GH_TOKEN}@github.com/{{workflow.parameters.owner}}/${APP}-conf.git" /workspace/conf
+            cd /workspace/conf
+            printf '# Archivo gestionado por el CI (Argo Workflows). No editar a mano.\ndeployments:\n  %s:\n    tag: %s\n' "$APP" "$TAG" > tags-prod.yaml
+            git add tags-prod.yaml
+            if git diff --cached --quiet; then echo "El tag ya era $TAG: nada que publicar"; exit 0; fi
+            git -c user.name=argo-ci -c user.email=argo-ci@noreply commit -m "$APP: imagen $TAG"
+            git pull --rebase origin main
+            git push origin HEAD:main
+        env:
+          - name: APP
+            value: "{{workflow.parameters.app}}"
+          - name: TAG
+            value: "{{=sprig.trunc(7, workflow.parameters.revision)}}"
+          - name: GH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-token
+                key: token
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace

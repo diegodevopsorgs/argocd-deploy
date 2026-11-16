@@ -1,0 +1,8 @@
+# Valores de producción.
+argo-workflows:
+  server:
+    replicas: 1            # 2 o más con alta disponibilidad
+    # ingress:             # exponer la UI con dominio y TLS (requiere un controlador de Ingress)
+    #   enabled: true
+    #   ingressClassName: nginx
+    #   hosts: [argo-workflows.midominio.com]

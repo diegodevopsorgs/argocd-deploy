@@ -1,0 +1,4 @@
+# Datos para el ApplicationSet (NO es un manifiesto de Kubernetes).
+name: ci
+enabled: "true"
+namespace: argo-events

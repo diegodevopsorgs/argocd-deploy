@@ -1,0 +1,49 @@
+# ServiceAccount de sólo lectura para entrar a la UI de Argo Workflows (auth-mode "client").
+# No tiene contraseña: se genera un token temporal con `kubectl -n argo create token ui-viewer`.
+# El ClusterRole "platform-argo-workflows-view" lo crea el chart de Argo Workflows.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ui-viewer
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ui-viewer
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: platform-argo-workflows-view
+subjects:
+  - kind: ServiceAccount
+    name: ui-viewer
+    namespace: argo
+---
+# En modo "client" el servidor de la UI lee los logs con el permiso del propio token. El rol "view" del chart
+# sólo cubre los objetos de Argo (workflows, templates), no los pods: sin esto, el botón LOGS queda vacío
+# ("Still waiting for data or an error").
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ui-viewer-logs
+  namespace: argo
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ui-viewer-logs
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ui-viewer-logs
+subjects:
+  - kind: ServiceAccount
+    name: ui-viewer
+    namespace: argo

@@ -1,0 +1,20 @@
+# Única Application que no sale de un ApplicationSet. La aplica entorno.py (no se aplica a mano).
+# Sincroniza app-manager/: el AppProject de plataforma y los tres ApplicationSets.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app-manager
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/diegodevopsorg/argocd-deploy.git
+    targetRevision: main
+    path: app-manager
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

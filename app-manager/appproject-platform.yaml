@@ -1,0 +1,22 @@
+# AppProject de la plataforma (Argo Workflows, Argo Events, CI).
+# Puede crear namespaces, CRDs y ClusterRoles; las apps de negocio usan el proyecto "default".
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"   # debe existir antes que las Applications que lo usan
+spec:
+  description: Herramientas de plataforma
+  sourceRepos:
+    - https://github.com/diegodevopsorg/argocd-deploy.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

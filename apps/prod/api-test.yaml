@@ -1,0 +1,5 @@
+name: api-test-app
+enabled: "true"            # "false" = se da de baja (Application y recursos eliminados; el PVC se conserva)
+repoURL: https://github.com/diegodevopsorg/api-test-conf.git
+targetRevision: main
+namespace: api-test-app

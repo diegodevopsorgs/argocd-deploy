@@ -1,0 +1,9 @@
+apiVersion: v2
+name: platform-argo-workflows
+description: Envoltorio de Argo Workflows (motor de pipelines de CI)
+type: application
+version: 0.1.0
+dependencies:
+  - name: argo-workflows
+    version: 2.0.18
+    repository: https://argoproj.github.io/argo-helm

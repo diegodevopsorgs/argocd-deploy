@@ -1,0 +1,61 @@
+# Sensor: escucha los push de GitHub, filtra la rama main y lanza el pipeline.
+# Sirve para cualquier repo de código que tenga configurado el webhook: no hay lista de repos.
+# Por eso el webhook se configura SÓLO en los repos de código de las apps, nunca en los repos -conf ni en
+# argocd-deploy: el propio CI hace un commit en el repo -conf, y eso dispararía el pipeline en bucle.
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: github-push-main
+  namespace: argo-events
+spec:
+  eventBusName: default
+  template:
+    serviceAccountName: operate-workflow-sa
+  dependencies:
+    - name: push-main
+      eventSourceName: github
+      eventName: push
+      filters:
+        data:
+          # Payload de GitHub (evento push, content type application/json). Sólo la rama main.
+          # El evento "ping" que GitHub manda al crear el webhook no trae "ref", así que queda filtrado.
+          - path: body.ref
+            type: string
+            value:
+              - "refs/heads/main"
+          # Sólo repos de la organización: descarta eventos con otro dueño.
+          - path: body.repository.owner.login
+            type: string
+            value:
+              - "diegodevopsorg"
+  triggers:
+    - template:
+        name: ci-build-release
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: ci-
+                namespace: argo
+              spec:
+                workflowTemplateRef:
+                  name: ci-build-release
+                arguments:
+                  parameters:
+                    - name: app
+                      value: placeholder
+                    - name: revision
+                      value: placeholder
+          # Rellena los parámetros con datos del evento
+          parameters:
+            - src:
+                dependencyName: push-main
+                dataKey: body.repository.name              # ej: simple-python-app
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: push-main
+                dataKey: body.after                        # hash del commit que quedó en main
+              dest: spec.arguments.parameters.1.value

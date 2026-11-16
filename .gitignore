@@ -1,0 +1,9 @@
+# Dependencias de Helm descargadas. Argo CD las baja solo a partir de Chart.yaml + Chart.lock.
+platform/charts/*/charts/
+*.tgz
+
+# Caché de Python
+__pycache__/
+
+# Tokens y usuarios: NUNCA se suben a Git (la plantilla es bootstrap/.env.example)
+.env

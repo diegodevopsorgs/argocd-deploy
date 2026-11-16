@@ -1,0 +1,11 @@
+# Bus de mensajes interno de Argo Events (NATS JetStream).
+# JetStream usa 3 réplicas, así que consume bastante en un cluster chico.
+# "latest" apunta a la versión de NATS que trae la versión fija del chart argo-events.
+apiVersion: argoproj.io/v1alpha1
+kind: EventBus
+metadata:
+  name: default
+  namespace: argo-events
+spec:
+  jetstream:
+    version: latest

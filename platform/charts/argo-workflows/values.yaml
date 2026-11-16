@@ -1,0 +1,18 @@
+argo-workflows:
+  crds:
+    install: true
+    keep: true
+    full: false            # CRDs reducidos: evitan el Job de instalación con server-side apply
+  # Todo Argo Workflows opera SÓLO en su namespace (argo): Roles en vez de ClusterRoles, y el servidor
+  # arranca con --namespaced, así la UI muestra "argo" por defecto en vez de pedir todos los namespaces
+  # (que el token de sólo lectura de ui-viewer no puede listar). Reemplaza a controller.workflowNamespaces.
+  singleNamespace: true
+  workflow:
+    serviceAccount:
+      create: true         # ServiceAccount "argo-workflow", el que usan los WorkflowTemplates
+    rbac:
+      create: true
+  server:
+    serviceType: ClusterIP
+    authModes:
+      - client             # login con token de Kubernetes. "server" (sin login) es sólo para laboratorio

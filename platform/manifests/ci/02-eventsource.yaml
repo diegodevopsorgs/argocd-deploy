@@ -1,0 +1,20 @@
+# EventSource: abre un endpoint HTTP que recibe el webhook de GitHub.
+# Crea el Service "github-eventsource-svc" en el puerto 12000.
+# Para que GitHub lo alcance hace falta un Ingress con dominio y TLS (no incluido: depende del host).
+# Este endpoint NO verifica la firma del webhook: cualquiera que conozca la URL puede mandar eventos.
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: github
+  namespace: argo-events
+spec:
+  eventBusName: default
+  service:
+    ports:
+      - port: 12000
+        targetPort: 12000
+  webhook:
+    push:                # nombre del evento (lo referencia el Sensor)
+      port: "12000"
+      endpoint: /push    # en producción usar un path no adivinable, ej: /push-8f3k29x
+      method: POST

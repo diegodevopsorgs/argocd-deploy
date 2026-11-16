@@ -1,0 +1,4 @@
+argo-events:
+  crds:
+    install: true
+    keep: true
