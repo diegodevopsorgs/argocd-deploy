@@ -10,7 +10,7 @@ metadata:
 spec:
   description: Herramientas de plataforma
   sourceRepos:
-    - https://github.com/diegodevopsorg/argocd-deploy.git
+    - https://github.com/diegodevopsorgs/argocd-deploy.git
   destinations:
     - server: https://kubernetes.default.svc
       namespace: '*'

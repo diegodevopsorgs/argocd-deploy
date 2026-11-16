@@ -27,7 +27,7 @@ spec:
           - path: body.repository.owner.login
             type: string
             value:
-              - "diegodevopsorg"
+              - "diegodevopsorgs"
   triggers:
     - template:
         name: ci-build-release

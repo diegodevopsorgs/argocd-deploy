@@ -13,7 +13,7 @@ spec:
     preserveResourcesOnDeletion: true
   generators:
     - git:
-        repoURL: https://github.com/diegodevopsorg/argocd-deploy.git
+        repoURL: https://github.com/diegodevopsorgs/argocd-deploy.git
         revision: main
         files:
           - path: 'platform/charts/*/platform.yaml'
@@ -28,7 +28,7 @@ spec:
     spec:
       project: platform
       source:
-        repoURL: https://github.com/diegodevopsorg/argocd-deploy.git
+        repoURL: https://github.com/diegodevopsorgs/argocd-deploy.git
         targetRevision: main
         path: 'platform/charts/{{ .name }}'
         helm:

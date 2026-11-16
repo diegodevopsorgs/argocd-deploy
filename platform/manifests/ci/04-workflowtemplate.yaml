@@ -22,7 +22,7 @@ spec:
       - name: app                  # lo rellena el Sensor: nombre del repo de código
       - name: revision             # lo rellena el Sensor: hash del commit
       - name: owner
-        value: diegodevopsorg      # organización de GitHub
+        value: diegodevopsorgs      # organización de GitHub
       - name: image-namespace
         value: diego1986           # usuario de Docker Hub
 

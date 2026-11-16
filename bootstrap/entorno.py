@@ -32,7 +32,7 @@ import urllib.request
 import webbrowser
 
 # ───────────────────────── Configuración ─────────────────────────
-OWNER = "diegodevopsorg"    # organización de GitHub dueña de los repos
+OWNER = "diegodevopsorgs"    # organización de GitHub dueña de los repos
 ARGOCD_VERSION = "v3.6.1"   # versión fija; se sube cambiando esta línea
 ARGOCD_MANIFEST = f"https://raw.githubusercontent.com/argoproj/argo-cd/{ARGOCD_VERSION}/manifests/install.yaml"
 APP = "simple-python-app"   # app cuyo CI se habilita (repos <app> y <app>-conf)
