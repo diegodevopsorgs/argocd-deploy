@@ -4,7 +4,7 @@
 #   código   github.com/<owner>/<app>
 #   chart    github.com/<owner>/<app>-conf
 #   imagen   <image-namespace>/<app>:<sha corto>
-#   token    UN solo Secret "github-token" en el namespace argo, común a todas las apps (lo crea entorno.py)
+#   token    UN solo Secret "github-token" en el namespace argo, común a todas las apps (lo crea entorno_local.py)
 #
 # El último paso escribe tags-prod.yaml en el repo -conf. Ese archivo es SÓLO del CI:
 # así nunca reformatea ni pisa lo que una persona edita en values-prod.yaml.

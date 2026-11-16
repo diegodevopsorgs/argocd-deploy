@@ -1,4 +1,4 @@
-# Única Application que no sale de un ApplicationSet. La aplica entorno.py (no se aplica a mano).
+# Única Application que no sale de un ApplicationSet. La aplica entorno_local.py (no se aplica a mano).
 # Sincroniza app-manager/: el AppProject de plataforma y los tres ApplicationSets.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
