@@ -48,6 +48,14 @@ sequenceDiagram
     CD->>CD: despliega la nueva versión
 ```
 
+## Guía de flujo GitOps
+
+Diagrama de referencia del patrón general, pensado como guía para otros procesos. **No representa exactamente
+este proyecto**: usa Bitbucket y Nexus en lugar de GitHub y Docker Hub, y agrega un gateway que valida la firma
+HMAC antes de Argo Events.
+
+![Guía de flujo GitOps con Argo Events, Argo Workflows y Argo CD](docs/flujo-gitops-referencia.png)
+
 ## Agregar una app nueva
 
 Cada app son **2 repos + 1 archivo** en `apps/prod/`. El CI y Argo CD se basan en esta convención de nombres, así
